@@ -73,31 +73,50 @@ def main():
         elif user_val == '2':
             print("Selected 2")
         elif user_val == '3':
-            print("Selected 2")
+            print("Selected 3")
         elif user_val == '4':
-            print("Selected 2")
+            print("Selected 4")
+            print("Use Case: Find number of restaurants that are open/closed in a zipcode")
+            loc = input("Enter postal code (Ex. 93101): ")
+            res = ""
+            op = input("Press 0 for Closed , 1 for Open ")
+            if(op == 0):
+                res = "Closed"
+            else:
+                res = "Open"
+            results = db.businessCollection.aggregate([
+                { "$match": { "$and": [ { "postal_code": { "$eq": loc } }, { "is_open": { "$eq": int(op) } } ] } },
+                { "$group": { "_id": "null", "count": { "$sum": 1 } } }
+                ])
+                
+            for result in results:
+                print(result.get('count') , "Restaurants are",res,"in postal code",loc)
+            proceed = input("Press any key to continue")
+
+            continue
+
         elif user_val == '5':
-            print("Selected 2")
+            print("Selected 5")
         elif user_val == '6':
-            print("Selected 2")
+            print("Selected 6")
         elif user_val == '7':
-            print("Selected 2")
+            print("Selected 7")
         elif user_val == '8':
-            print("Selected 2")
+            print("Selected 8")
         elif user_val == '9':
-            print("Selected 2")
+            print("Selected 9")
         elif user_val == '10':
-            print("Selected 2")
+            print("Selected 10")
         elif user_val == '11':
-            print("Selected 2")
+            print("Selected 11")
         elif user_val == '12':
-            print("Selected 2")
+            print("Selected 12")
         elif user_val == '13':
-            print("Selected 2")
+            print("Selected 13")
         elif user_val == '14':
-            print("Selected 2")
+            print("Selected 14")
         elif user_val == '15':
-            print("Selected 2")
+            print("Selected 15")
         else:
             print("Terminating")
             break
