@@ -18,6 +18,7 @@ def main():
     db = client["testdb"]
     businessCollection = db["businessCollection"]
     reviewCollection = db["reviewCollection"]
+    userCollection = db["userCollection"]
 
     # y = client.list_database_names
     # print(y)
@@ -40,7 +41,8 @@ def main():
         print("13. Update business information")
         print("14. Delete user who hasn’t shown activity in X Time")
         print("15. Find sum of users who joined yelp since date X")
-        print("16. EXIT")
+        print("16. Find top 10 businesses in location X with highest number of check in times")
+        print("17. EXIT")
         user_val = input()
 
         if user_val == '1':
@@ -107,6 +109,20 @@ def main():
             print("Selected 9")
         elif user_val == '10':
             print("Selected 10")
+            print("Use Case: Create users with given parameters")
+            name = input("Enter name of the user ")
+            reviews = int(input("Enter the number of reviews written by this user "))
+            yelp_since = input("Enter the date since the user joined Yelp (format YYYY-MM-DD ")
+            post_record = {"name": name,"review_count":reviews,"yelping_since":yelp_since}
+            db.userCollection.insert_one(post_record)
+            print("Record created")
+            results = db.userCollection.find({"name":name,"review_count":reviews,"yelping_since":yelp_since})
+            if len(list(results.clone())) > 0:
+                for result in results:
+                    print(result)
+        
+            else:
+                print("No records found!")
         elif user_val == '11':
             print("Selected 11")
         elif user_val == '12':
@@ -117,6 +133,23 @@ def main():
             print("Selected 14")
         elif user_val == '15':
             print("Selected 15")
+        elif user_val == '16':
+            print("Selected 16")
+            print("Use Case: Find top 10 businesses in location X with highest number of check in times")
+            loc = input("Enter postal code (Ex. 93101): ")
+            agg = [
+            {"$match": {"postal_code": { "$eq": loc }}},
+            {"$project": {"_id":"$business_id","name":"$name","checkin_count":{ "$size": { "$ifNull": [ "$check-in", [] ] }}}}, 
+            {"$sort":{"checkin_count":-1}},
+            {"$limit":10}
+            ]
+            results = db.businessCollection.aggregate(agg,allowDiskUse=True)
+            for result in results:
+                print(result)
+
+            proceed = input("Press any key to continue")
+            continue
+
         else:
             print("Terminating")
             break
