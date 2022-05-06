@@ -20,6 +20,7 @@ def main():
     businessCollection = db["businessCollection"]
     reviewCollection = db["reviewCollection"]
     userCollection = db["userCollection"]
+    tipCollection = db["tipCollection"]
 
     # y = client.list_database_names
     # print(y)
@@ -28,7 +29,7 @@ def main():
         print("Welcome to the YELP Business Analysis Tool")
         print("Choose an option from the following: ")
         print("1. Find top 10 restaurants in location X")
-        print("2. List of users from city X who provide the most number of compliments")
+        print("2. List of users who provide the most number of compliments")
         print("3. Find restaurants that are open after Y Time and have parking and valet service")
         print("4. Find number of restaurants that are open/closed in a zipcode")
         print("5. Find restaurants in a certain zip code that provides delivery services")
@@ -40,7 +41,7 @@ def main():
         print("11. Create business with given parameters")
         print("12. Update user reviews")
         print("13. Update business information")
-        print("14. Delete user who hasn’t shown activity in X Time")
+        print("14. Delete a user based on the user id")
         print("15. Find sum of users who joined yelp since date X")
         print("16. Find top 10 businesses in location X with highest number of check in times")
         print("17. EXIT")
@@ -76,6 +77,20 @@ def main():
             continue
         elif user_val == '2':
             print("Selected 2")
+            print("Use Case: List of users who provide the most number of compliments")
+            results = db.tipCollection.aggregate([
+                {"$group": {_id:"$compliment_count",user_IDs: {"$push":"$user_id"}}}
+                {"$sort":{"_id":-1}},
+                {"$limit":1}
+                ])
+                
+            for res in results:
+                print(res)
+
+            proceed = input("Press any key to continue ")
+            continue
+
+
         elif user_val == '3':
             print("Selected 3")
         elif user_val == '4':
@@ -101,6 +116,21 @@ def main():
 
         elif user_val == '5':
             print("Selected 5")
+            print("Use Case: Find restaurants in a certain zip code that provides delivery services.")
+            businessZip = input(“Enter postal code: ”)
+            
+            restaurants=db.businessCollection.find({"postal_code":businessZip, "attributes.RestaurantsDelivery":"True"},{"business_id":1,"name":1}).limit(10)
+            
+            if len(list(results.clone())) > 0:
+                for res in restaurants:
+                print(res)
+            else:
+                print("No records found!")
+            
+            proceed = input("Press any key to continue ")
+            
+            continue
+
         elif user_val == '6':
             print("Selected 6")
         elif user_val == '7':
@@ -120,6 +150,21 @@ def main():
 
         elif user_val == '8':
             print("Selected 8")
+            print("Use Case: Find average star rating for every state. Display the state and the star ratings")
+            results = db.businessCollection.aggregate([
+                {"$group": {_id: "$state", avg_star: {"$avg": "$star"}}},
+                { "$limit": 500 },
+                {"$project": {state:"$state", avg_star:"$avg_star"}}
+            ])
+
+            for result in results:
+                print(result)
+
+            proceed = input("Press any key to continue ")
+
+            continue
+
+
         elif user_val == '9':
             print("Selected 9")
         elif user_val == '10':
@@ -142,8 +187,28 @@ def main():
             proceed = input("Press any key to continue ")
 
             continue
+
         elif user_val == '11':
             print("Selected 11")
+            print("Use Case: Create business with given parameters ")
+            businessID = input("Enter the business id: ")
+            businessName = input("Enter the name of the business: ")
+            businessAddress = input("Enter the address: ")
+            business_record = {"business_id": businessID, "name": businessName, "address": businessAddress}
+            db.businessCollection.insert_one(business_record)
+            print("Business record created")
+            results = db.businessCollection.find({"business_id": businessID, "name": businessName, "address": businessAddress})
+            if len(list(results.clone())) > 0:
+                for result in results:
+                    print(result)
+            else:
+                print("No records found!")
+            
+            proceed = input("Press any key to continue ")
+
+            continue
+           
+
         elif user_val == '12':
             print("Selected 12")
         elif user_val == '13':
@@ -182,6 +247,18 @@ def main():
 
         elif user_val == '14':
             print("Selected 14")
+            print("Use Case: Delete a user based on the user id ")
+            try:
+                userID = input("Enter the user id to delete: ")
+                db.userCollection.delete_one({"user_id": userID})
+                print("Deletion successful")
+
+            except Exception as e:
+                print(e)
+
+            proceed = input("Press any key to continue ")
+            continue
+
         elif user_val == '15':
             print("Selected 15")
         elif user_val == '16':
