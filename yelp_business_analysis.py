@@ -99,7 +99,7 @@ def main():
             day = ''
             day_regex = "Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday"
             while len(day) <= 0:
-                day = input("What day would you like to check? (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday)")
+                day = input("What day would you like to check? (Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday) ")
                 if re.fullmatch(day_regex, day) == None:
                     print("Day not recognized. Please try again.")
                     day = ''
@@ -107,7 +107,7 @@ def main():
             time_str = ''
             time_regex = "(1?[0-9])|(2[0-4])|([0-9](a|p)m)|(1[0-2](a|p)m)"
             while len(time_str) <= 0:
-                time_str = input("After what time should we look for? (Military time 0 - 23 only)")
+                time_str = input("After what time should we look for? (Military time 0 - 23 only) ")
                 if re.fullmatch("1?[0-9]|2[0-3]", time_str) == None:
                     print("Time not recognized. Please try again")
                     time_str = ''
@@ -135,6 +135,7 @@ def main():
             else:
                 for doc in valid: print(doc)
             proceed = input("Press any key to continue ")
+            continue
 
         elif user_val == '4':
             print("Selected 4")
@@ -175,7 +176,31 @@ def main():
             continue
 
         elif user_val == '6':
-            print("Selected 6") #TODO
+            try:
+                print("Selected 6")
+                print("Use Case: Find businesses with review counts greater than X and display hours")
+                rev_no = int(input("How many reviews? "))
+                # Aggregate pipeline, sort is in descending order to find the closest to the number
+                pipeline = [
+                    {"$group": {"_id": "$business_id", "review_no": {"$sum": 1}}},
+                    {"$match": {"review_no": {"$gte": rev_no}}},
+                    {"$sort": {"review_no": -1}},
+                    {"$limit": 10}
+                ]
+                res = reviewCollection.aggregate(pipeline)
+                # Query the business dataset to get additional business data
+                for doc in res:
+                    tmp = businessCollection.find({"business_id": doc["_id"]}, {"name": 1, "city": 1}).limit(1)
+                    doc["name"] = tmp["name"]
+                    doc["city"] = tmp["city"]
+                # Print after querying to prevent the output from looking delayed
+                for doc in res:
+                    print(doc)
+            except Exception as e:
+                print(e)
+            proceed = input("Press any key to continue ")
+            continue
+
         elif user_val == '7':
             print("Selected 7")
             print("Use Case: Find restaurants in location X where dogs are allowed and wifi is free")
@@ -223,6 +248,7 @@ def main():
             except Exception as e:
                 print(e)
             proceed = input("Press any key to continue ")
+            continue
         elif user_val == '10':
             print("Selected 10")
             print("Use Case: Create user with given parameters")
@@ -266,7 +292,72 @@ def main():
            
 
         elif user_val == '12':
-            print("Selected 12")
+            print("Selected 12") #TODO
+            print("Use Case: Update user reviews")
+            try:
+                # Find the review
+                filter = input("Enter the review id or search with the (business name) or [user name]")
+                if filter[0] == "(":
+                    res = businessCollection.find_one({"name": filter.strip("()")}, {"business_id": 1, "name": 1})
+                    if res == None:
+                        raise Exception("Business not found")
+                    print(res["name"] + " has been found")
+                    resRev = reviewCollection.find({"business_id": res["business_id"]}).limit(10)
+                    for doc in resRev:
+                        print("Review " + doc["review_id"] + " : " + doc["text"][0:30])
+                    filter = input("Which review id would you like to update? ")
+                elif filter[0] == "[":
+                    res = userCollection.find_one({"name": filter.strip("[]")}, {"user_id": 1, "name": 1})
+                    if res == None:
+                        raise Exception("User not found")
+                    print(res["name"] + " has been found")
+                    resRev = reviewCollection.find({"user_id": res["user_id"]}).limit(10)
+                    for doc in resRev:
+                        print("Review " + doc["review_id"] + " : " + doc["text"][0:30])
+                    filter = input("Which review id would you like to update? ")
+                else:
+                    pass
+                # Determine editing privileges
+                option = int(input("Are you editing (1) or commenting (2)? "))
+                if option == 1:
+                    # Edit the review stars and text
+                    current = reviewCollection.find_one({"review_id": filter})
+                    print("Review Data")
+                    print("Review ID: " + current["review_id"])
+                    print("Stars given: " + str(current["stars"]))
+                    print(current["text"][0:50])
+                    stars = int(input("How many stars would you like to give? (0-5) ")) % 6
+                    txt = input("What's the new review text?\n")
+                    success = reviewCollection.update_one({"review_id": filter}, {"$set": {"stars": stars, "text": txt}})
+                    if success.modified_count > 0:
+                        print("Update successful")
+                    else:
+                        print("Update failed")
+                elif option == 2:
+                    # Edit the useful, funny, cool ratings
+                    current = reviewCollection.find_one({"review_id": filter})
+                    print("Review Data")
+                    print("Review ID: " + current["review_id"])
+                    print("Stars: " + str(current["stars"]))
+                    print("Useful: " + str(current["useful"]))
+                    print("Funny: " + str(current["funny"]))
+                    print("Cool: " + str(current["cool"]))
+                    print(current["text"][0:50])
+                    stat = input("Mark as cool, funny, or useful? (cool, funny, useful) ")
+                    if stat not in ["cool", "funny", "useful"]:
+                        raise Exception("Not a valid mark")
+                    success = reviewCollection.update_one({"review_id": filter}, {"$inc": {stat: 1}})
+                    if success.modified_count > 0:
+                        print("Update successful")
+                    else:
+                        print("Update failed")
+                else:
+                    raise Exception("Command not recognized")
+            except Exception as e:
+                print(e)
+            proceed = input("Press any key to continue ")
+            continue
+            
         elif user_val == '13':
             print("Selected 13")
             print("Use Case: Update business information ")
@@ -320,7 +411,7 @@ def main():
                 print("Selected 15")
                 print("Use Case: Find sum of users who joined yelp since date X")
                 dt_str = input("Enter a date (YYYY-MM-DD): ")
-                y, m, d = dt_str.split("-")
+                y, m, d = dt_str.strip("()").split("-")
                 dt_obj = datetime.datetime(int(y), int(m), int(d))
                 pipeline = [
                     {"$match": {"yelping_since": {"$gte": dt_obj}}},
@@ -331,6 +422,7 @@ def main():
             except Exception as e:
                 print(e)
             proceed = input("Press any key to continue ")
+            continue
 
         elif user_val == '16':
             print("Selected 16")
