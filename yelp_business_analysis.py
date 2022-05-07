@@ -410,7 +410,6 @@ def main():
         elif user_val == '14':
             print("Selected 14")
             print("Use Case: Delete a user based on the user id ")
-            
             userID = input("Enter the user id to delete: ")
             db.userCollection.delete_one({"user_id": userID})
             results = db.userCollection.find({"user_id": userID})
@@ -423,6 +422,7 @@ def main():
                 
             proceed = input("Press any key to continue ")
             continue
+            
 
         elif user_val == '15':
             try:
