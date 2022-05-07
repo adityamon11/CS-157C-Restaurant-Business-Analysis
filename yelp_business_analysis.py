@@ -235,7 +235,7 @@ def main():
             print("Selected 8")
             print("Use Case: Find average star rating for every state. Display the state and the star ratings")
             results = db.businessCollection.aggregate([
-                {"$group": {"_id": "$state", "avg_star": {"$avg": "$star"}}},
+                {"$group": {"_id": "$state", "avg_star": {"$avg": "$stars"}}},
                 { "$limit": 500 },
                 {"$project": {"state":"$state", "avg_star":"$avg_star"}}
             ])
