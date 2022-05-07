@@ -77,14 +77,24 @@ def main():
         elif user_val == '2':
             print("Selected 2")
             print("Use Case: List of users who provide the most number of compliments")
+            
+            myVals = []
+
             results = db.tipCollection.aggregate([
-                {"$group": {"_id":"$compliment_count","user_IDs": {"$push":"$user_id"}}},
-                {"$sort":{"_id":-1}},
-                {"$limit":1}
-                ])
-                
-            for res in results:
-                print(res)
+                {"$sort":{"compliment_count":-1}},
+                { "$limit": 500 },
+                {"$project": {"user_id": "user_id" }}
+            ])
+            
+            for result in results:
+                myVals.append(result.get('user_id'))
+
+            endResult = db.userCollection.find({"user_id":{"$in":myVals}},{"user_id":1,"name":1}).limit(10)
+            if len(list(endResult.clone())) > 0:
+                for result in endResult:
+                    print(result)
+            else:
+                print("No records found!")
 
             proceed = input("Press any key to continue ")
             continue
