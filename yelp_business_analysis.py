@@ -199,12 +199,17 @@ def main():
                 ]
                 res = reviewCollection.aggregate(pipeline)
                 # Query the business dataset to get additional business data
+                docStore = []
                 for doc in res:
-                    tmp = businessCollection.find({"business_id": doc["_id"]}, {"name": 1, "city": 1}).limit(1)
-                    doc["name"] = tmp["name"]
-                    doc["city"] = tmp["city"]
+                    tmp = businessCollection.find_one({"business_id": doc["_id"]}, {"name": 1, "city": 1, "hours": 1})
+                    docStore.append({
+                        "name": tmp["name"],
+                        "city": tmp["city"],
+                        "review_count": doc["review_no"],
+                        "hours": tmp["hours"]
+                    })
                 # Print after querying to prevent the output from looking delayed
-                for doc in res:
+                for doc in docStore:
                     print(doc)
             except Exception as e:
                 print(e)
@@ -252,9 +257,9 @@ def main():
                     "postal_code": z,
                     "attributes.RestaurantsReservation": False
                 }
-                res = businessCollection.find(query)
+                res = businessCollection.find(query).limit(10)
                 for r in res:
-                    print(result)
+                    print(r)
             except Exception as e:
                 print(e)
             proceed = input("Press any key to continue ")
