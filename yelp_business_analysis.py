@@ -410,14 +410,17 @@ def main():
         elif user_val == '14':
             print("Selected 14")
             print("Use Case: Delete a user based on the user id ")
-            try:
-                userID = input("Enter the user id to delete: ")
-                db.userCollection.delete_one({"user_id": userID})
+            
+            userID = input("Enter the user id to delete: ")
+            db.userCollection.delete_one({"user_id": userID})
+            results = db.userCollection.find({"user_id": userID})
+            
+            if len(list(results.clone())) > 0:
+                print("Deletion failed")
+        
+            else:
                 print("Deletion successful")
-
-            except Exception as e:
-                print(e)
-
+                
             proceed = input("Press any key to continue ")
             continue
 
