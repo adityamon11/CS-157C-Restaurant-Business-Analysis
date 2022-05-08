@@ -353,7 +353,8 @@ def main():
                     stars = int(input("How many stars would you like to give? (0-5) ")) % 6
                     txt = input("What's the new review text?\n")
                     success = reviewCollection.update_one({"business_id": current["business_id"], "_id": current["_id"]}, {"$set": {"stars": stars, "text": txt}})
-                    if success["modified_count"] > 0:
+                    print("printing::",success)
+                    if success.modified_count > 0:
                         print("Update successful")
                         print(reviewCollection.find_one({"_id": current["_id"]}))
                     else:
@@ -372,7 +373,7 @@ def main():
                     if stat not in ["cool", "funny", "useful"]:
                         raise Exception("Not a valid mark")
                     success = reviewCollection.update_one({"business_id": current["business_id"], "_id": current["id"]}, {"$inc": {stat: 1}})
-                    if success["modified_count"] > 0:
+                    if success.modified_count > 0:
                         print("Update successful")
                         print(reviewCollection.find_one({"_id": current["_id"]}))
                     else:
@@ -422,14 +423,16 @@ def main():
             print("Selected 14")
             print("Use Case: Delete a user based on the user id ")
             userID = input("Enter the user id to delete: ")
-            db.userCollection.delete_one({"user_id": userID})
+            deleteObject = db.userCollection.delete_one({"user_id": userID})
+            
             results = db.userCollection.find({"user_id": userID})
             
             if len(list(results.clone())) > 0:
                 print("Deletion failed")
         
             else:
-                print("Deletion successful")
+                print("Deleted:",deleteObject.deleted_count,"object with id",userID,"successfully")
+                
                 
             proceed = input("Press any key to continue ")
             continue
